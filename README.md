@@ -1,61 +1,70 @@
 # ARPple
 
-ARPple is a network security lab project that demonstrates how **ARP spoofing** can change the local traffic path on a shared network and how this can be combined with **plaintext HTTP inspection**, **DNS spoofing**, and **HTTP response injection** in a controlled Windows–Kali lab environment.
+**ARP spoofing, DNS redirection, plaintext HTTP analysis, and traffic-manipulation defenses.**
 
-This repository contains the final project report with screenshots, commands, observations, and defense notes.
+ARPple explores how forged ARP replies can change the local traffic path between a Windows host and its gateway. The project also examines what an unencrypted HTTP request reveals, how a spoofed DNS answer redirects a hostname, how HTTP content can be modified, and how a permanent ARP entry can protect a gateway mapping.
 
-## Project Overview
+## Technologies & Tools
 
-The project uses:
+| Category | Technologies |
+| --- | --- |
+| Operating systems | Kali Linux, Windows 11 |
+| Network analysis | Wireshark, Bettercap |
+| Virtualization | VMware |
+| Languages used in test pages and commands | Python 3, HTML, JavaScript, PowerShell, Bash |
+| Networking & security concepts | ARP, DNS, HTTP, TCP/IP, man-in-the-middle (MITM), static ARP entries |
 
-- **Windows 11 VM** as the target host
-- **Kali Linux VM** as the attacking and monitoring host
-- **Bettercap** for ARP spoofing, DNS spoofing, and HTTP proxy injection
-- **Wireshark** for packet inspection and protocol evidence
+**Language note:** Python was used to host HTTP test pages; HTML and JavaScript were used for the test pages and injection demonstration. PowerShell and Bash were used for system configuration and verification. This is a network-security demonstration, not a standalone application written in these languages.
 
-The lab demonstrates five main ideas:
+## Lab Environment
 
-1. **ARP spoofing** changes the gateway mapping on Windows so that traffic is redirected through Kali.
-2. **Plaintext HTTP** exposes readable form values when traffic is not protected by TLS.
-3. **DNS spoofing** changes the hostname-to-IP resolution for `lab.test`.
-4. **HTTP injection** modifies an HTTP response and inserts JavaScript into the page.
-5. **Static ARP defense** pins the legitimate gateway MAC address and resists repeated dynamic ARP poisoning.
+| Component | Role | Lab address |
+| --- | --- | --- |
+| Windows 11 VM | Target, browser, and ARP-table verification | `10.10.10.128` |
+| Kali Linux VM | Bettercap, Wireshark, and test web server | `10.10.10.129` |
+| Gateway | Legitimate default gateway | `10.10.10.2` |
 
-## Repository Contents
+Both virtual machines operated on the same isolated lab subnet (`10.10.10.0/24`).
 
-- [`ARPple_Report.pdf`](./ARPple_Report.pdf) — full project report
+## What the Project Demonstrates
 
-## Key Demonstrations
+### 1. ARP spoofing
 
-### 1. ARP Spoofing
-Bettercap forges ARP replies so that the Windows system maps the gateway IP address to Kali’s MAC address. This changes the local delivery path and causes gateway-bound traffic to pass through Kali.
+Bettercap sends forged ARP replies associating the gateway IP (`10.10.10.2`) with Kali's MAC address. Wireshark records the ARP replies, and the Windows ARP table confirms that the gateway mapping changes. IP forwarding is enabled on Kali during the test.
 
-### 2. Plaintext HTTP Inspection
-A test login page hosted on Kali is accessed from Windows over HTTP. Wireshark captures the HTTP POST request and shows that the submitted values are readable in plaintext.
+### 2. Plaintext HTTP inspection
 
-### 3. DNS Spoofing
-Bettercap spoofs the DNS response for `lab.test` and resolves it to Kali’s IP address (`10.10.10.129`). `nslookup` and `curl` confirm that the request reaches the Kali-hosted page.
+A test login page is served directly from Kali and accessed from Windows over HTTP. Wireshark displays the form fields submitted in an HTTP POST request. The page uses **fake credentials**; this direct HTTP request is a separate test and does not itself prove interception of a third-party session.
 
-### 4. HTTP Injection
-A separate HTTP test page is served on port `8000`. Bettercap’s HTTP proxy injects JavaScript into the response, and the browser displays the alert message:
+### 3. DNS spoofing
 
-> You have been pwned!
+A spoofed DNS response resolves `lab.test` to `10.10.10.129`. The result is checked using `nslookup` and an HTTP request with `curl.exe`, which receives the test page from Kali.
 
-### 5. Static ARP Defense
-Windows is configured with a permanent ARP entry for the legitimate gateway MAC address. When the spoofing attempt is repeated, the entry remains permanent and the forged dynamic mapping does not replace it.
+### 4. HTTP JavaScript injection
 
-## Main Security Takeaways
+A separate test page on port `8000` demonstrates modification of unencrypted HTTP content. The browser displays a JavaScript alert: **“You have been pwned!”**
 
-- **ARP spoofing** affects local Layer 2 delivery by changing MAC resolution.
-- **DNS spoofing** affects name resolution by changing the IP returned for a hostname.
-- **HTTP** without TLS can expose and allow modification of traffic contents.
-- **HTTPS** protects application data with encryption and reduces the impact of simple traffic interception.
-- **Static ARP entries**, **network segmentation**, **client isolation**, and **Dynamic ARP Inspection (DAI)** help reduce the risk of ARP-based attacks.
+### 5. Static ARP defense
 
-## Notes
+A persistent Windows neighbor entry binds the gateway IP to its legitimate MAC address. During the repeated spoofing attempt, that mapping remains **Permanent** instead of being replaced by a forged dynamic entry.
 
-- This project is performed in a **controlled lab environment** for educational and defensive analysis.
-- The report uses **test systems**, **test pages**, and **fake credentials** only.
+## Key Findings
+
+- **ARP spoofing** changes the MAC address used to reach a local IP.
+- **DNS spoofing** changes the IP address returned for a hostname.
+- **Unencrypted HTTP** can expose form data and permit response modification.
+- **HTTPS/TLS** protects application content; changing an ARP or DNS mapping alone does not decrypt a valid HTTPS connection.
+- **Static ARP mappings** can protect a specific entry. Network-wide protections include Dynamic ARP Inspection, client isolation, and network segmentation.
+
+## Project Report
+
+The report contains the network setup, commands, screenshots, observed results, infographic, and cleanup procedures.
+
+**[Read the ARPple Project Report (PDF)](./ARPple_Report_FINAL.pdf)**
+
+## Scope
+
+The experiments use virtual machines, controlled test pages, and fake credentials in an authorized lab environment.
 
 ## Author
 
