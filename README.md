@@ -60,7 +60,7 @@ A persistent Windows neighbor entry binds the gateway IP to its legitimate MAC a
 
 The report contains the network setup, commands, screenshots, observed results, infographic, and cleanup procedures.
 
-**[Read the ARPple Project Report (PDF)](./ARPple_Report_FINAL.pdf)**
+**[Read the ARPple Project Report (PDF)](./ARPple_Report.pdf)**
 
 ## Scope
 
